@@ -8,18 +8,15 @@ using Terraria;
 
 namespace Regions
 {
+    [APIVersion( 1, 12 )]
     internal class Regions : TerrariaPlugin
     {
         private RegionManager RegionManager;
         private IDbConnection DB;
-
-        public delegate void InitializedD();
-        public static event InitializedD Initialized;
         private Commands comms;
 
         public Regions( Main game) : base( game )
         {
-            comms = new Commands();
         }
 
         public override string Author
@@ -46,15 +43,52 @@ namespace Regions
         {
             DB = TShock.DB;
             RegionManager = new RegionManager(DB);
-
+            comms = new Commands( RegionManager );
             Hooks.GameHooks.PostInitialize += OnPostInit;
+            GetDataHandlers.TileEdit += OnTileEdit;
             TShockAPI.Commands.ChatCommands.Add(new Command("manageregion", comms.Region, "region"));
         }
 
         private void OnPostInit()
         {
             RegionManager.ReloadAllRegions();
-            Initialized();
+        }
+
+        private void OnTileEdit(object sender, GetDataHandlers.TileEditEventArgs args)
+        {
+            if (args.Player.AwaitingName)
+            {
+                var protectedregions = RegionManager.InAreaRegionName(args.X, args.Y);
+                if (protectedregions.Count == 0)
+                {
+                    args.Player.SendMessage("Region is not protected", Color.Yellow);
+                }
+                else
+                {
+                    string regionlist = string.Join(",", protectedregions.ToArray());
+                    args.Player.SendMessage("Region Name(s): " + regionlist, Color.Yellow);
+                }
+                args.Player.SendTileSquare(args.X, args.Y);
+                args.Player.AwaitingName = false;
+                args.Handled = true;
+            }
+
+            if (args.Handled)
+            {
+                return;
+            }
+
+            Region region = RegionManager.GetTopRegion(RegionManager.InAreaRegion(args.X, args.Y));
+            if (!RegionManager.CanBuild(args.X, args.Y, args.Player))
+            {
+                if (((DateTime.Now.Ticks/TimeSpan.TicksPerMillisecond) - args.Player.RPm) > 2000)
+                {
+                    args.Player.SendMessage("Region protected from changes.", Color.Red);
+                    args.Player.RPm = DateTime.Now.Ticks/TimeSpan.TicksPerMillisecond;
+                }
+                args.Player.SendTileSquare(args.X, args.Y);
+                args.Handled = true;
+            }
         }
 
         protected override void Dispose(bool disposing)

@@ -9,6 +9,13 @@ namespace Regions
 {
     internal class Commands
     {
+        private RegionManager Regions;
+
+        public Commands( RegionManager r )
+        {
+            Regions = r;
+        }
+
         public void Region(CommandArgs args)
         {
             string cmd = "help";
@@ -54,7 +61,7 @@ namespace Regions
                                 var width = Math.Abs(args.Player.TempPoints[0].X - args.Player.TempPoints[1].X);
                                 var height = Math.Abs(args.Player.TempPoints[0].Y - args.Player.TempPoints[1].Y);
 
-                                if (TShock.Regions.AddRegion(x, y, width, height, regionName, args.Player.UserAccountName,
+                                if (Regions.AddRegion(x, y, width, height, regionName, args.Player.UserAccountName,
                                                              Main.worldID.ToString()))
                                 {
                                     args.Player.TempPoints[0] = Point.Zero;
@@ -82,14 +89,14 @@ namespace Regions
                             string regionName = args.Parameters[1];
                             if (args.Parameters[2].ToLower() == "true")
                             {
-                                if (TShock.Regions.SetRegionState(regionName, true))
+                                if (Regions.SetRegionState(regionName, true))
                                     args.Player.SendSuccessMessage("Protected region " + regionName);
                                 else
                                     args.Player.SendErrorMessage("Could not find specified region");
                             }
                             else if (args.Parameters[2].ToLower() == "false")
                             {
-                                if (TShock.Regions.SetRegionState(regionName, false))
+                                if (Regions.SetRegionState(regionName, false))
                                     args.Player.SendSuccessMessage("Unprotected region " + regionName);
                                 else
                                     args.Player.SendErrorMessage("Could not find specified region");
@@ -106,7 +113,7 @@ namespace Regions
                         if (args.Parameters.Count > 1)
                         {
                             string regionName = String.Join(" ", args.Parameters.GetRange(1, args.Parameters.Count - 1));
-                            if (TShock.Regions.DeleteRegion(regionName))
+                            if (Regions.DeleteRegion(regionName))
                                 args.Player.SendSuccessMessage("Deleted region " + regionName);
                             else
                                 args.Player.SendErrorMessage("Could not find specified region");
@@ -143,7 +150,7 @@ namespace Regions
                             }
                             if (TShock.Users.GetUserByName(playerName) != null)
                             {
-                                if (TShock.Regions.AddNewUser(regionName, playerName))
+                                if (Regions.AddNewUser(regionName, playerName))
                                 {
                                     args.Player.SendSuccessMessage("Added user " + playerName + " to " + regionName);
                                 }
@@ -178,7 +185,7 @@ namespace Regions
                         }
                         if (TShock.Users.GetUserByName(playerName) != null)
                         {
-                            if (TShock.Regions.RemoveUser(regionName, playerName))
+                            if (Regions.RemoveUser(regionName, playerName))
                             {
                                 args.Player.SendSuccessMessage("Removed user " + playerName + " from " + regionName);
                             }
@@ -213,7 +220,7 @@ namespace Regions
                             }
                             if (TShock.Groups.GroupExists(group))
                             {
-                                if (TShock.Regions.AllowGroup(regionName, group))
+                                if (Regions.AllowGroup(regionName, group))
                                 {
                                     args.Player.SendSuccessMessage("Added group " + group + " to " + regionName);
                                 }
@@ -248,7 +255,7 @@ namespace Regions
                         }
                         if (TShock.Groups.GroupExists(group))
                         {
-                            if (TShock.Regions.RemoveGroup(regionName, group))
+                            if (Regions.RemoveGroup(regionName, group))
                             {
                                 args.Player.SendSuccessMessage("Removed group " + group + " from " + regionName);
                             }
@@ -283,7 +290,7 @@ namespace Regions
                             page--; //Substract 1 as pages are parsed starting at 1 and not 0
                         }
 
-                        var regions = TShock.Regions.ListAllRegions(Main.worldID.ToString());
+                        var regions = Regions.ListAllRegions(Main.worldID.ToString());
 
                         // Are there even any regions to display?
                         if (regions.Count == 0)
@@ -329,7 +336,7 @@ namespace Regions
                         if (args.Parameters.Count > 1)
                         {
                             string regionName = String.Join(" ", args.Parameters.GetRange(1, args.Parameters.Count - 1));
-                            TShockAPI.DB.Region r = TShock.Regions.GetRegionByName(regionName);
+                            Region r = Regions.GetRegionByName(regionName);
 
                             if (r == null)
                             {
@@ -360,7 +367,7 @@ namespace Regions
                             int z = 0;
                             if (int.TryParse(args.Parameters[2], out z))
                             {
-                                if (TShock.Regions.SetZ(regionName, z))
+                                if (Regions.SetZ(regionName, z))
                                     args.Player.SendInfoMessage("Region's z is now " + z);
                                 else
                                     args.Player.SendErrorMessage("Could not find specified region");
@@ -412,10 +419,10 @@ namespace Regions
                             }
                             int addAmount;
                             int.TryParse(args.Parameters[3], out addAmount);
-                            if (TShock.Regions.resizeRegion(args.Parameters[1], addAmount, direction))
+                            if (Regions.resizeRegion(args.Parameters[1], addAmount, direction))
                             {
                                 args.Player.SendSuccessMessage("Region Resized Successfully!");
-                                TShock.Regions.ReloadAllRegions();
+                                Regions.ReloadAllRegions();
                             }
                             else
                             {
